@@ -1,0 +1,33 @@
+@MYA.Api_HostAddress = http://localhost:5110
+
+POST {{MYA.Api_HostAddress}}/api/myAuth/login
+Content-Type: application/json
+
+{
+  "codiceCliente": "8888888888",
+  "login": "giulio.caruso",
+  "password": "<stessa-password-di-davide.dibenedetto.mi>"
+}
+
+###
+
+POST {{MYA.Api_HostAddress}}/api/myAuth/login
+Content-Type: application/json
+
+{
+  "codiceCliente": "8888888888",
+  "login": "luca.pesola",
+  "password": "<stessa-password-di-davide.dibenedetto.mi>"
+}
+
+###
+
+POST {{MYA.Api_HostAddress}}/api/myAuth/verifyMfa
+Content-Type: application/json
+
+{
+  "userId": 4022,
+  "code": "123456"
+}
+
+###

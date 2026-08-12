@@ -1,0 +1,68 @@
+using System.Globalization;
+using Microsoft.Data.SqlClient;
+
+namespace MYA.Data.Database;
+
+internal static class SqlDataReaderExtensions
+{
+    public static string? GetNullableString(this SqlDataReader reader, string name)
+    {
+        var value = reader.GetValueOrNull(name);
+        return value is null ? null : Convert.ToString(value, CultureInfo.InvariantCulture);
+    }
+
+    public static int? GetNullableInt32(this SqlDataReader reader, string name)
+    {
+        var value = reader.GetValueOrNull(name);
+        return value is null ? null : Convert.ToInt32(value, CultureInfo.InvariantCulture);
+    }
+
+    public static long? GetNullableInt64(this SqlDataReader reader, string name)
+    {
+        var value = reader.GetValueOrNull(name);
+        return value is null ? null : Convert.ToInt64(value, CultureInfo.InvariantCulture);
+    }
+
+    public static long GetInt64Required(this SqlDataReader reader, string name)
+    {
+        return reader.GetNullableInt64(name)
+            ?? throw new InvalidOperationException($"Column {name} is null.");
+    }
+
+    public static int GetInt32Required(this SqlDataReader reader, string name)
+    {
+        return reader.GetNullableInt32(name)
+            ?? throw new InvalidOperationException($"Column {name} is null.");
+    }
+
+    public static DateTime GetDateTimeRequired(this SqlDataReader reader, string name)
+    {
+        var value = reader.GetValueOrNull(name)
+            ?? throw new InvalidOperationException($"Column {name} is null.");
+
+        return Convert.ToDateTime(value, CultureInfo.InvariantCulture);
+    }
+
+    public static bool? GetNullableBoolean(this SqlDataReader reader, string name)
+    {
+        var value = reader.GetValueOrNull(name);
+
+        return value switch
+        {
+            null => null,
+            bool boolValue => boolValue,
+            byte byteValue => byteValue != 0,
+            short shortValue => shortValue != 0,
+            int intValue => intValue != 0,
+            long longValue => longValue != 0,
+            string stringValue => stringValue.Trim() is "1" or "S" or "s" or "Y" or "y" or "true" or "True",
+            _ => Convert.ToBoolean(value, CultureInfo.InvariantCulture)
+        };
+    }
+
+    private static object? GetValueOrNull(this SqlDataReader reader, string name)
+    {
+        var ordinal = reader.GetOrdinal(name);
+        return reader.IsDBNull(ordinal) ? null : reader.GetValue(ordinal);
+    }
+}
