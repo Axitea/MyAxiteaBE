@@ -1,38 +1,59 @@
 # MYA Backend
 
-Backend .NET 10 per autenticazione cliente, MFA via SMS/email e generazione token del nuovo progetto MYA.
+Backend .NET 10 per login cliente, MFA via SMS/email e generazione token MYA.
+
+## Aprire in Visual Studio
+
+1. Clona il repository BE.
+2. Apri `MYA.sln` con Visual Studio.
+3. Imposta `MYA.Api` come startup project, se non e' gia' selezionato.
+4. Seleziona il profilo `http`.
+5. Premi `F5`.
+
+Swagger parte su:
+
+```text
+http://127.0.0.1:5110/swagger
+```
+
+La configurazione di sviluppo e' gia' inclusa in:
+
+```text
+src/MYA.Api/appsettings.Development.json
+```
 
 ## Stack
 
 - .NET 10 / ASP.NET Core Web API
-- Solution multi-project: `MYA.Api`, `MYA.Business`, `MYA.Data`, `MYA.Models`
+- Visual Studio Community 2022
 - SQL Server con `Microsoft.Data.SqlClient` `7.0.2`
-- Invio email MFA tramite API HTTP `AuthNew/SendMail`
 - JWT con `System.IdentityModel.Tokens.Jwt` `8.22.0`
-- Swagger UI con `Swashbuckle.AspNetCore` `10.2.3`
-- NuGet Audit abilitato su dipendenze dirette e transitive
+- Swagger con `Swashbuckle.AspNetCore` `10.2.3`
+- NuGet Audit attivo su dipendenze dirette e transitive
 
 ## Architettura
 
-- `MYA.Api`: startup, DI, CORS, Swagger e controller HTTP.
-- `MYA.Business`: regole applicative di login, MFA, crypto legacy e token.
-- `MYA.Data`: DB helper async, connection factory e repository per stored procedure.
-- `MYA.Models`: request, response, DTO e options di configurazione.
-- `database`: script SQL versionati per Puzzle e SAT.
+```text
+src/
++-- MYA.Api        Controller, Swagger, CORS, DI, configurazione
++-- MYA.Business   Login, MFA, crypto legacy, token
++-- MYA.Data       DB helper async e repository SQL
++-- MYA.Models     DTO, response, options e record condivisi
+database/
++-- Puzzle         Stored procedure Puzzle 10.20.0.80
++-- Sat            Stored procedure SAT 10.20.0.30
+```
 
 ## Flusso Login
 
 ```text
 POST /api/myAuth/login
 -> valida codice cliente, login e password su Puzzle
+-> usa Wus_Id_App = 2
 -> password cifrata con algoritmo legacy compatibile
--> richiede utente con Wus_Id_App = 2
--> genera codice MFA a 6 cifre
--> aggiorna T_WEB_UTENTI.Wus_2FA_Code e Wus_2FA_LastRequest
--> se Wus_2FA_NumCell e' presente scrive SMS su SAT Macro_Vpn tramite wrapper nuova
--> se Wus_2FA_NumCell manca invia email a Wus_Email tramite API SendMail
--> se mancano sia cellulare sia email genera token e ritorna un avviso sicurezza
--> ritorna userId, login, nome, canale MFA, destinazione mascherata, scadenza MFA o token diretto
+-> se Wus_2FA_NumCell esiste invia MFA via SMS
+-> se manca cellulare ma esiste Wus_Email invia MFA via email
+-> se mancano entrambi genera token e ritorna securityNotice
 ```
 
 ```text
@@ -41,72 +62,37 @@ POST /api/myAuth/verifyMfa
 -> azzera Wus_2FA_Code dopo successo
 -> genera access token JWT e refresh token
 -> scrive JWTokens con idApp = 2 e permission = 0
--> ritorna token al frontend
 ```
 
 ## Endpoint
 
-Rotte camelCase, senza trattini:
-
 - `POST /api/myAuth/login`
 - `POST /api/myAuth/verifyMfa`
 
-Swagger:
+## Configurazione Dev
 
-```text
-http://127.0.0.1:5110/swagger
-```
+Il profilo `Development` usa gia':
 
-## JWT
+- Puzzle `10.20.0.80`
+- SAT `10.20.0.30`
+- API locale `http://127.0.0.1:5110`
+- JWT signing key locale
+- chiave crypto legacy
+- endpoint mail `https://devapi.axitea.com/api/AuthNew/SendMail`
 
-Il JWT nuovo non contiene permessi SAT o `userFunctionSat`.
+Per cambiare un valore, modifica `src/MYA.Api/appsettings.Development.json`.
 
-Claim applicativi previsti:
-
-- `sub`: id riga utente/token
-- `jti`: id univoco token
-- `idUtente`: id utente funzionale eventuale
-- `email`: email utente, se presente
-- `ragioneSociale`: ragione sociale cliente, se presente
-
-La colonna `JWTokens.permission` resta valorizzata a `0` solo per compatibilita' con lo schema legacy.
-
-## Configurazione Locale
-
-Non committare segreti in `appsettings.json`. Usare variabili ambiente:
+## Comandi CLI
 
 ```powershell
-$env:Database__PuzzleConnectionString="Server=10.20.0.80;Database=smartsat_co;User Id=...;Password=...;Encrypt=False;TrustServerCertificate=True"
-$env:Database__SatConnectionString="Server=10.20.0.30;Database=smartsat_co;User Id=...;Password=...;Encrypt=False;TrustServerCertificate=True"
-$env:MyAuth__LegacyPasswordKeyPhrase="..."
-$env:MyAuth__MissingMfaSecurityNotice="Account sprovvisto di sicurezza a due fattori..."
-$env:Jwt__SigningKey="chiave-lunga-almeno-32-byte"
-$env:MailApi__BearerToken="..."
-```
-
-## Comandi
-
-```powershell
-cd C:\MYA\BE
 dotnet restore
-dotnet build .\MYA.slnx
+dotnet build .\MYA.sln
 dotnet run --project .\src\MYA.Api\MYA.Api.csproj --launch-profile http
 ```
 
-## Sicurezza Pacchetti
+## Stored Procedure
 
-`Directory.Build.props` abilita NuGet Audit in modalita' transitive.
-Le vulnerabilita' `NU1901`, `NU1902`, `NU1903` e `NU1904` sono trattate come errori.
-
-Controllo manuale:
-
-```powershell
-dotnet list .\MYA.slnx package --vulnerable --include-transitive
-```
-
-## Stored Procedure Nuove
-
-Puzzle `10.20.0.80`:
+Puzzle:
 
 ```text
 database/Puzzle/001_sp_My_GetLogin.sql
@@ -117,43 +103,16 @@ database/Puzzle/005_sp_My_GetJWTokenValue.sql
 database/Puzzle/006_seed_luca_pesola_mfa_email.sql
 ```
 
-SAT `10.20.0.30`:
+SAT:
 
 ```text
 database/Sat/001_sp_My_EnqueueMfaSms.sql
 ```
 
-`sp_My_EnqueueMfaSms` e' una wrapper nuova che chiama la stored legacy `dbo.sp_Insert_PZ_MacroVpn_Dispatcher_SmsEmail`.
+## Sicurezza Pacchetti
 
-## MFA Email
+Controllo manuale:
 
-Se l'utente ha `Wus_2FA_NumCell` vuoto ma `Wus_Email` valorizzato, il backend invia il codice MFA via HTTP POST a:
-
-```text
-https://devapi.axitea.com/api/AuthNew/SendMail
+```powershell
+dotnet list .\MYA.sln package --vulnerable --include-transitive
 ```
-
-Payload:
-
-```json
-{
-  "To": "giulio.caruso%40axitea.com",
-  "Subject": "Codice di sicurezza MYA",
-  "Body": "Il tuo codice di sicurezza e' 123456. Non condividerlo.",
-  "DescrSender": "PUZZLE",
-  "HasCC": false,
-  "CC": "",
-  "BCC": ""
-}
-```
-
-L'header `Authorization: Bearer ...` viene letto da `MailApi__BearerToken` e non deve essere salvato nel repository.
-
-## MFA Mancante
-
-Se l'utente non ha ne' `Wus_2FA_NumCell` ne' `Wus_Email`, il backend non blocca l'accesso:
-
-- registra un warning applicativo;
-- genera subito access token e refresh token;
-- ritorna `requiresMfa = false`, `token` e `securityNotice`;
-- il frontend mostra un popup dedicato che segnala account sprovvisto di sicurezza a due fattori.
