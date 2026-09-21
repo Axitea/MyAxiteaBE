@@ -21,6 +21,7 @@ public sealed class SqlConnectionFactory : ISqlConnectionFactory
         {
             DatabaseTarget.Puzzle => _options.PuzzleConnectionString,
             DatabaseTarget.Sat => _options.SatConnectionString,
+            DatabaseTarget.DBUNICO => _options.DBUNICOConnectionString,
             _ => throw new ArgumentOutOfRangeException(nameof(target), target, null)
         };
 

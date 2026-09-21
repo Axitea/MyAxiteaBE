@@ -6,5 +6,7 @@ public sealed class DatabaseOptions
 
     public string SatConnectionString { get; set; } = string.Empty;
 
+    public string DBUNICOConnectionString { get; set; } = string.Empty;
+
     public int CommandTimeoutSeconds { get; set; } = 30;
 }

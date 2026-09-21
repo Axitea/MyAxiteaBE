@@ -23,4 +23,11 @@ public interface IDbExecutor
         string storedProcedure,
         IReadOnlyCollection<SqlParameter> parameters,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<T>> QueryAsyncNoSequential<T>(
+        DatabaseTarget target,
+        string storedProcedure,
+        IReadOnlyCollection<SqlParameter> parameters,
+        Func<SqlDataReader, T> map,
+        CancellationToken cancellationToken = default);
 }

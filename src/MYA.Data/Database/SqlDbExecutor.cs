@@ -36,6 +36,30 @@ public sealed class SqlDbExecutor : IDbExecutor
         return rows;
     }
 
+    public async Task<IReadOnlyList<T>> QueryAsyncNoSequential<T>(
+        DatabaseTarget target,
+        string storedProcedure,
+        IReadOnlyCollection<SqlParameter> parameters,
+        Func<SqlDataReader, T> map,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = _connectionFactory.Create(target);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        await using var command = CreateCommand(connection, storedProcedure, parameters);
+        await using var reader = await command
+            .ExecuteReaderAsync( cancellationToken)
+            .ConfigureAwait(false);
+
+        var rows = new List<T>();
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            rows.Add(map(reader));
+        }
+
+        return rows;
+    }
+
     public async Task<T?> QuerySingleOrDefaultAsync<T>(
         DatabaseTarget target,
         string storedProcedure,
