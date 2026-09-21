@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MYA.Business.Auth;
 using MYA.Models.Auth;
+using MYA.Models.Common;
 
 namespace MYA.Api.Controllers;
 

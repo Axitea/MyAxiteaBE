@@ -1,5 +1,5 @@
 using MYA.Data.DbUnico;
-using MYA.Models.MyCliente;
+using MYA.Models.Common;
 
 namespace MYA.Business.Clienti;
 

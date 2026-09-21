@@ -1,4 +1,4 @@
-namespace MYA.Models.Auth;
+namespace MYA.Models.Common;
 
 public sealed record ApiResponse<T>(bool Success, T? Data, string? Message)
 {

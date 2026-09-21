@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MYA.Models.MyCliente;
+namespace MYA.Models.Common;
 
 public sealed class InfoCliente
 {

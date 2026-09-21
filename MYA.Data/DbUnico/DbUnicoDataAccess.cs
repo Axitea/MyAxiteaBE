@@ -1,7 +1,7 @@
 using System.Globalization;
 using Microsoft.Data.SqlClient;
 using MYA.Data.Common;
-using MYA.Models.MyCliente;
+using MYA.Models.Common;
 
 namespace MYA.Data.DbUnico;
 
