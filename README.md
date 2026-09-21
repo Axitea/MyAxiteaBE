@@ -19,7 +19,7 @@ http://127.0.0.1:5110/swagger
 La configurazione di sviluppo e' gia' inclusa in:
 
 ```text
-src/MYA.Api/appsettings.Development.json
+MYA.Api/appsettings.Development.json
 ```
 
 ## Stack
@@ -34,11 +34,10 @@ src/MYA.Api/appsettings.Development.json
 ## Architettura
 
 ```text
-src/
-+-- MYA.Api        Controllers HTTP, Swagger, CORS, DI, configurazione
-+-- MYA.Business   Servizi concreti per autenticazione e clienti
-+-- MYA.Data       Data access SQL per database e helper comuni
-+-- MYA.Models     DTO, response, options e record condivisi
+MYA.Api            Controllers HTTP, Swagger, CORS, DI, configurazione
+MYA.Business       Servizi concreti per autenticazione e clienti
+MYA.Data           Data access SQL per database e helper comuni
+MYA.Models         DTO, response, options e record condivisi
 database/
 +-- Puzzle         Stored procedure Puzzle 10.20.0.80
 +-- Sat            Stored procedure SAT 10.20.0.30
@@ -96,14 +95,14 @@ Il profilo `Development` usa gia':
 - chiave crypto legacy
 - endpoint mail `https://devapi.axitea.com/api/AuthNew/SendMail`
 
-Per cambiare un valore, modifica `src/MYA.Api/appsettings.Development.json`.
+Per cambiare un valore, modifica `MYA.Api/appsettings.Development.json`.
 
 ## Comandi CLI
 
 ```powershell
 dotnet restore
 dotnet build .\MYA.sln
-dotnet run --project .\src\MYA.Api\MYA.Api.csproj --launch-profile http
+dotnet run --project .\MYA.Api\MYA.Api.csproj --launch-profile http
 ```
 
 ## Stored Procedure

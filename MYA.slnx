@@ -1,8 +1,6 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/MYA.Api/MYA.Api.csproj" />
-    <Project Path="src/MYA.Business/MYA.Business.csproj" />
-    <Project Path="src/MYA.Data/MYA.Data.csproj" />
-    <Project Path="src/MYA.Models/MYA.Models.csproj" />
-  </Folder>
+  <Project Path="MYA.Api/MYA.Api.csproj" />
+  <Project Path="MYA.Business/MYA.Business.csproj" />
+  <Project Path="MYA.Data/MYA.Data.csproj" />
+  <Project Path="MYA.Models/MYA.Models.csproj" />
 </Solution>

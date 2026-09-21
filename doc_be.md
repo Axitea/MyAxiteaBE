@@ -33,11 +33,10 @@ Il progetto mantiene compatibilita' con dati e crypto legacy, ma introduce store
 BE/
 +-- MYA.slnx
 +-- Directory.Build.props
-+-- src/
-|   +-- MYA.Api
-|   +-- MYA.Business
-|   +-- MYA.Data
-|   +-- MYA.Models
++-- MYA.Api
++-- MYA.Business
++-- MYA.Data
++-- MYA.Models
 +-- database/
 |   +-- Puzzle
 |   +-- Sat
@@ -297,7 +296,7 @@ La tabella `JWTokens` conserva la colonna `permission`; il nuovo progetto la val
 cd C:\MYA\BE
 dotnet restore
 dotnet build .\MYA.slnx
-dotnet run --project .\src\MYA.Api\MYA.Api.csproj --launch-profile http
+dotnet run --project .\MYA.Api\MYA.Api.csproj --launch-profile http
 ```
 
 Swagger:
