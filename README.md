@@ -35,13 +35,26 @@ src/MYA.Api/appsettings.Development.json
 
 ```text
 src/
-+-- MYA.Api        Controller, Swagger, CORS, DI, configurazione
-+-- MYA.Business   Login, MFA, crypto legacy, token
-+-- MYA.Data       DB helper async e repository SQL
++-- MYA.Api        Controllers HTTP, Swagger, CORS, DI, configurazione
++-- MYA.Business   Servizi concreti per autenticazione e clienti
++-- MYA.Data       Data access SQL per database e helper comuni
 +-- MYA.Models     DTO, response, options e record condivisi
 database/
 +-- Puzzle         Stored procedure Puzzle 10.20.0.80
 +-- Sat            Stored procedure SAT 10.20.0.30
+```
+
+`MYA.Api/Controllers` resta l'unico punto di ingresso HTTP. Il codice interno non usa
+interfacce con una sola implementazione: `AuthService` coordina `PuzzleDataAccess`,
+`SatDataAccess` e `MfaMailApiClient`; `ClientiService` usa `DbUnicoDataAccess`.
+
+`MYA.Data` e' organizzato per database:
+
+```text
+Common/      SqlConnectionFactory, SqlExecutor e mapping comune
+Puzzle/      PuzzleDataAccess
+Sat/         SatDataAccess
+DbUnico/     DbUnicoDataAccess
 ```
 
 ## Flusso Login
@@ -68,6 +81,8 @@ POST /api/myAuth/verifyMfa
 
 - `POST /api/myAuth/login`
 - `POST /api/myAuth/verifyMfa`
+- `GET /api/MyClienti/GetAllContrattiByCliente`
+- `GET /api/MyClienti/GetAllClienti`
 
 ## Configurazione Dev
 
@@ -75,6 +90,7 @@ Il profilo `Development` usa gia':
 
 - Puzzle `10.20.0.80`
 - SAT `10.20.0.30`
+- DBUNICO `10.20.0.83`
 - API locale `http://127.0.0.1:5110`
 - JWT signing key locale
 - chiave crypto legacy

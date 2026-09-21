@@ -1,8 +1,8 @@
-namespace MYA.Data.Database;
+namespace MYA.Data.Common;
 
 public enum DatabaseTarget
 {
     Puzzle,
     Sat,
-    DBUNICO
+    DbUnico
 }

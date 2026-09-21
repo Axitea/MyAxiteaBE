@@ -48,10 +48,22 @@ BE/
 
 | Progetto | Responsabilita' |
 | --- | --- |
-| `MYA.Api` | Controller HTTP, Swagger, CORS, configurazione, dependency injection |
-| `MYA.Business` | Regole di login, MFA, crypto password legacy, generazione token |
-| `MYA.Data` | DB helper async, connection factory, repository SQL |
+| `MYA.Api` | Controllers HTTP, Swagger, CORS, configurazione, dependency injection |
+| `MYA.Business` | Servizi concreti per autenticazione, MFA, crypto legacy, token e clienti |
+| `MYA.Data` | Data access SQL organizzato per database, connection factory e executor comuni |
 | `MYA.Models` | DTO, request/response, options e record condivisi |
+
+I controller sono raccolti nella sola cartella `MYA.Api/Controllers`. Le dipendenze interne
+usano classi concrete: non sono presenti interfacce per classi con una sola implementazione.
+
+`MYA.Data` e' organizzato per database:
+
+| Cartella | Classe | Responsabilita' |
+| --- | --- | --- |
+| `Common` | `SqlConnectionFactory`, `SqlExecutor` | Connessioni, timeout, parametri ed esecuzione stored |
+| `Puzzle` | `PuzzleDataAccess` | Login, MFA e token su Puzzle |
+| `Sat` | `SatDataAccess` | Accodamento SMS MFA su SAT |
+| `DbUnico` | `DbUnicoDataAccess` | Clienti e contratti su DBUNICO |
 
 ## Configurazione
 
@@ -60,6 +72,7 @@ Le opzioni vengono lette da `appsettings.json` e sovrascritte tramite variabili 
 ```text
 Database__PuzzleConnectionString
 Database__SatConnectionString
+Database__DBUNICOConnectionString
 Database__CommandTimeoutSeconds
 MyAuth__AppId
 MyAuth__LegacyPasswordKeyPhrase
@@ -169,6 +182,17 @@ Effetti:
 - chiama `dbo.sp_My_InsertJWTokenValue`;
 - scrive su `JWTokens` con `idApp = 2` e `permission = 0`.
 
+### GET `/api/MyClienti/GetAllContrattiByCliente`
+
+Riceve il parametro query `CodCliente` e restituisce contratti, posizioni e tipologie di
+servizio aggregate per indirizzo tramite DBUNICO. La response esistente con campi `Response`,
+`Data` e `Message` resta invariata.
+
+### GET `/api/MyClienti/GetAllClienti`
+
+Restituisce i clienti disponibili su DBUNICO. Anche per questo endpoint la response esistente
+resta invariata.
+
 ## JWT
 
 Il JWT nuovo non contiene permessi legacy SAT.
@@ -199,6 +223,8 @@ La tabella `JWTokens` conserva la colonna `permission`; il nuovo progetto la val
 | --- | --- | --- |
 | `MYA.Api/Controllers/MyAuthController.cs` | `Login` | Espone `POST /api/myAuth/login` |
 | `MYA.Api/Controllers/MyAuthController.cs` | `VerifyMfa` | Espone `POST /api/myAuth/verifyMfa` |
+| `MYA.Api/Controllers/MyClientiController.cs` | `GetAllContratti` | Espone `GET /api/MyClienti/GetAllContrattiByCliente` |
+| `MYA.Api/Controllers/MyClientiController.cs` | `GetAllClienti` | Espone `GET /api/MyClienti/GetAllClienti` |
 
 ### Business
 
@@ -207,26 +233,30 @@ La tabella `JWTokens` conserva la colonna `permission`; il nuovo progetto la val
 | `AuthService.cs` | `StartLoginAsync` | Orchestrazione login, MFA code e invio SMS/email |
 | `AuthService.cs` | `VerifyMfaAsync` | Verifica OTP e token |
 | `AuthService.cs` | `IssueTokenAsync` | Emissione token condivisa fra verifica MFA e accesso senza canali 2FA |
-| `HttpMfaMailSender.cs` | `SendMfaCodeAsync` | Invio codice MFA via API HTTP `SendMail` |
+| `MfaMailApiClient.cs` | `SendMfaCodeAsync` | Invio codice MFA via API HTTP `SendMail` |
 | `LegacyPasswordCipher.cs` | `Encrypt` | Cifratura password compatibile legacy |
 | `LegacyPasswordCipher.cs` | `Decrypt` | Decifratura compatibile legacy |
 | `MfaCodeGenerator.cs` | `Generate` | Generazione codice numerico sicuro |
 | `JwtTokenService.cs` | `Issue` | Creazione access token e refresh token |
+| `ClientiService.cs` | `GetAllContrattiClienteAsync` | Coordina il recupero contratti per cliente |
+| `ClientiService.cs` | `GetClientiAsync` | Coordina il recupero clienti |
 
 ### Data
 
 | File | Metodo | Descrizione |
 | --- | --- | --- |
-| `SqlConnectionFactory.cs` | `Create` | Crea connessione Puzzle o SAT |
-| `SqlDbExecutor.cs` | `QueryAsync` | Esegue stored e mappa piu' righe |
-| `SqlDbExecutor.cs` | `QuerySingleOrDefaultAsync` | Esegue stored e mappa una riga |
-| `SqlDbExecutor.cs` | `ExecuteAsync` | Esegue stored senza result set |
-| `AuthRepository.cs` | `GetLoginAsync` | Chiama `sp_My_GetLogin` |
-| `AuthRepository.cs` | `SetMfaCodeAsync` | Chiama `sp_My_SetMfaCode` |
-| `AuthRepository.cs` | `VerifyMfaCodeAsync` | Chiama `sp_My_VerifyMfaCode` |
-| `SmsOutboxRepository.cs` | `EnqueueMfaSmsAsync` | Chiama `sp_My_EnqueueMfaSms` |
-| `TokenRepository.cs` | `InsertAsync` | Chiama `sp_My_InsertJWTokenValue` |
-| `TokenRepository.cs` | `GetByRefreshTokenAsync` | Chiama `sp_My_GetJWTokenValue` |
+| `Common/SqlConnectionFactory.cs` | `Create` | Crea connessione Puzzle, SAT o DBUNICO |
+| `Common/SqlExecutor.cs` | `QueryAsync` | Esegue stored e mappa piu' righe |
+| `Common/SqlExecutor.cs` | `QuerySingleOrDefaultAsync` | Esegue stored e mappa una riga |
+| `Common/SqlExecutor.cs` | `ExecuteAsync` | Esegue stored senza result set |
+| `Puzzle/PuzzleDataAccess.cs` | `GetLoginAsync` | Chiama `sp_My_GetLogin` |
+| `Puzzle/PuzzleDataAccess.cs` | `SaveMfaCodeAsync` | Chiama `sp_My_SetMfaCode` |
+| `Puzzle/PuzzleDataAccess.cs` | `VerifyMfaCodeAsync` | Chiama `sp_My_VerifyMfaCode` |
+| `Puzzle/PuzzleDataAccess.cs` | `SaveIssuedTokenAsync` | Chiama `sp_My_InsertJWTokenValue` |
+| `Puzzle/PuzzleDataAccess.cs` | `GetTokenByRefreshTokenAsync` | Chiama `sp_My_GetJWTokenValue` |
+| `Sat/SatDataAccess.cs` | `EnqueueMfaSmsAsync` | Chiama `sp_My_EnqueueMfaSms` |
+| `DbUnico/DbUnicoDataAccess.cs` | `GetAllClientiAsync` | Chiama `sp_GetALL_MY_ViewDBUnico` |
+| `DbUnico/DbUnicoDataAccess.cs` | `GetContrattiByClienteAsync` | Chiama `sp_Get_CordinateCliente_byCodCliente` |
 
 ## Stored Procedure
 

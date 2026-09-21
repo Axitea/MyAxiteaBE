@@ -5,12 +5,12 @@ using MYA.Models.Configuration;
 
 namespace MYA.Business.Auth;
 
-public sealed class HttpMfaMailSender : IMfaMailSender
+public sealed class MfaMailApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly MailApiOptions _options;
 
-    public HttpMfaMailSender(HttpClient httpClient, IOptions<MailApiOptions> options)
+    public MfaMailApiClient(HttpClient httpClient, IOptions<MailApiOptions> options)
     {
         _httpClient = httpClient;
         _options = options.Value;

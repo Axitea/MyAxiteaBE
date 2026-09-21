@@ -16,7 +16,7 @@ builder.Services.Configure<MailApiOptions>(builder.Configuration.GetSection("Mai
 
 builder.Services.AddDataAccess();
 builder.Services.AddBusinessServices();
-builder.Services.AddHttpClient<IMfaMailSender, HttpMfaMailSender>((serviceProvider, client) =>
+builder.Services.AddHttpClient<MfaMailApiClient>((serviceProvider, client) =>
 {
     var options = serviceProvider.GetRequiredService<IOptions<MailApiOptions>>().Value;
     var timeoutSeconds = Math.Clamp(options.TimeoutSeconds, 1, 120);

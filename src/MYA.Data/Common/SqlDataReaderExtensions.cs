@@ -1,7 +1,7 @@
 using System.Globalization;
 using Microsoft.Data.SqlClient;
 
-namespace MYA.Data.Database;
+namespace MYA.Data.Common;
 
 internal static class SqlDataReaderExtensions
 {
@@ -9,6 +9,12 @@ internal static class SqlDataReaderExtensions
     {
         var value = reader.GetValueOrNull(name);
         return value is null ? null : Convert.ToString(value, CultureInfo.InvariantCulture);
+    }
+
+    public static string GetStringRequired(this SqlDataReader reader, string name)
+    {
+        return reader.GetNullableString(name)
+            ?? throw new InvalidOperationException($"Column {name} is null.");
     }
 
     public static int? GetNullableInt32(this SqlDataReader reader, string name)

@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using MYA.Business.MyCliente;
+using MYA.Business.Clienti;
 using MYA.Models.MyCliente;
 using MYA.Models.Auth;
 
@@ -7,22 +7,26 @@ namespace MYA.Api.Controllers;
 
 [ApiController]
 [Route("api/MyClienti")]
-public sealed class MyClienti : ControllerBase
+public sealed class MyClientiController : ControllerBase
 {
-    private readonly IMyCliente _myCliente;
+    private readonly ClientiService _clientiService;
 
-    public MyClienti(IMyCliente myCliente)
+    public MyClientiController(ClientiService clientiService)
     {
-        _myCliente = myCliente;
+        _clientiService = clientiService;
     }
 
     [HttpGet("GetAllContrattiByCliente")]
     [ProducesResponseType(typeof(ApiResponse<List<InfoCliente>>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ApiResponse<List<InfoCliente>>>> GetAllContratti(string CodCliente, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<List<InfoCliente>>>> GetAllContratti(
+        string CodCliente,
+        CancellationToken cancellationToken)
     {
         try
         {
-            List<InfoCliente> result = await _myCliente.GetAllContrattiCliente(CodCliente, cancellationToken).ConfigureAwait(false);
+            List<InfoCliente> result = await _clientiService
+                .GetAllContrattiClienteAsync(CodCliente, cancellationToken)
+                .ConfigureAwait(false);
 
             return Ok(new
             {
@@ -47,7 +51,9 @@ public sealed class MyClienti : ControllerBase
     {
         try
         {
-            List<InfoCliente> result = await _myCliente.GetCliente(cancellationToken).ConfigureAwait(false);
+            List<InfoCliente> result = await _clientiService
+                .GetClientiAsync(cancellationToken)
+                .ConfigureAwait(false);
 
             return Ok(new
             {
@@ -65,5 +71,4 @@ public sealed class MyClienti : ControllerBase
             });
         }
     }
-
 }

@@ -1,13 +1,13 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-namespace MYA.Data.Database;
+namespace MYA.Data.Common;
 
-public sealed class SqlDbExecutor : IDbExecutor
+public sealed class SqlExecutor
 {
-    private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly SqlConnectionFactory _connectionFactory;
 
-    public SqlDbExecutor(ISqlConnectionFactory connectionFactory)
+    public SqlExecutor(SqlConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
     }
@@ -48,7 +48,7 @@ public sealed class SqlDbExecutor : IDbExecutor
 
         await using var command = CreateCommand(connection, storedProcedure, parameters);
         await using var reader = await command
-            .ExecuteReaderAsync( cancellationToken)
+            .ExecuteReaderAsync(cancellationToken)
             .ConfigureAwait(false);
 
         var rows = new List<T>();

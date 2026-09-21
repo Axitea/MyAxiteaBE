@@ -1,46 +1,43 @@
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
-using MYA.Business.Security;
-using MYA.Data.Repositories;
+using MYA.Data.Puzzle;
+using MYA.Data.Sat;
 using MYA.Models.Auth;
 using MYA.Models.Configuration;
 
 namespace MYA.Business.Auth;
 
-public sealed class AuthService : IAuthService
+public sealed class AuthService
 {
     private const int SmsMaxLength = 160;
     private const string DeliveryChannelSms = "sms";
     private const string DeliveryChannelEmail = "email";
     private const string DeliveryChannelNone = "none";
 
-    private readonly IAuthRepository _authRepository;
-    private readonly ISmsOutboxRepository _smsOutboxRepository;
-    private readonly IMfaMailSender _mfaMailSender;
-    private readonly ITokenRepository _tokenRepository;
-    private readonly ILegacyPasswordCipher _passwordCipher;
-    private readonly IMfaCodeGenerator _mfaCodeGenerator;
-    private readonly IJwtTokenService _jwtTokenService;
+    private readonly PuzzleDataAccess _puzzleDataAccess;
+    private readonly SatDataAccess _satDataAccess;
+    private readonly MfaMailApiClient _mfaMailApiClient;
+    private readonly LegacyPasswordCipher _passwordCipher;
+    private readonly MfaCodeGenerator _mfaCodeGenerator;
+    private readonly JwtTokenService _jwtTokenService;
     private readonly MyAuthOptions _authOptions;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
-        IAuthRepository authRepository,
-        ISmsOutboxRepository smsOutboxRepository,
-        IMfaMailSender mfaMailSender,
-        ITokenRepository tokenRepository,
-        ILegacyPasswordCipher passwordCipher,
-        IMfaCodeGenerator mfaCodeGenerator,
-        IJwtTokenService jwtTokenService,
+        PuzzleDataAccess puzzleDataAccess,
+        SatDataAccess satDataAccess,
+        MfaMailApiClient mfaMailApiClient,
+        LegacyPasswordCipher passwordCipher,
+        MfaCodeGenerator mfaCodeGenerator,
+        JwtTokenService jwtTokenService,
         IOptions<MyAuthOptions> authOptions,
         TimeProvider timeProvider,
         ILogger<AuthService> logger)
     {
-        _authRepository = authRepository;
-        _smsOutboxRepository = smsOutboxRepository;
-        _mfaMailSender = mfaMailSender;
-        _tokenRepository = tokenRepository;
+        _puzzleDataAccess = puzzleDataAccess;
+        _satDataAccess = satDataAccess;
+        _mfaMailApiClient = mfaMailApiClient;
         _passwordCipher = passwordCipher;
         _mfaCodeGenerator = mfaCodeGenerator;
         _jwtTokenService = jwtTokenService;
@@ -55,7 +52,7 @@ public sealed class AuthService : IAuthService
     {
         var encryptedPassword = _passwordCipher.Encrypt(request.Password, _authOptions.LegacyPasswordKeyPhrase);
 
-        var user = await _authRepository.GetLoginAsync(
+        var user = await _puzzleDataAccess.GetLoginAsync(
                 request.CodiceCliente.Trim(),
                 request.Login.Trim(),
                 encryptedPassword,
@@ -100,13 +97,13 @@ public sealed class AuthService : IAuthService
 
         var code = _mfaCodeGenerator.Generate(_authOptions.MfaCodeLength);
 
-        await _authRepository.SetMfaCodeAsync(user.UserIdToken, _authOptions.AppId, code, now, cancellationToken)
+        await _puzzleDataAccess.SaveMfaCodeAsync(user.UserIdToken, _authOptions.AppId, code, now, cancellationToken)
             .ConfigureAwait(false);
 
         if (delivery.Channel == DeliveryChannelSms)
         {
             var smsText = BuildSmsText(code);
-            await _smsOutboxRepository.EnqueueMfaSmsAsync(
+            await _satDataAccess.EnqueueMfaSmsAsync(
                     new MfaSmsMessage(user.UserIdToken, delivery.Destination, smsText, now),
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -135,7 +132,7 @@ public sealed class AuthService : IAuthService
         CancellationToken cancellationToken = default)
     {
         var now = _timeProvider.GetUtcNow();
-        var user = await _authRepository.VerifyMfaCodeAsync(
+        var user = await _puzzleDataAccess.VerifyMfaCodeAsync(
                 request.UserId,
                 _authOptions.AppId,
                 request.Code,
@@ -191,7 +188,7 @@ public sealed class AuthService : IAuthService
     {
         var issuedToken = _jwtTokenService.Issue(user, _authOptions.AppId, now);
 
-        await _tokenRepository.InsertAsync(
+        await _puzzleDataAccess.SaveIssuedTokenAsync(
                 new JwtTokenWrite(
                     issuedToken.AccessToken,
                     user.Login,
@@ -232,7 +229,7 @@ public sealed class AuthService : IAuthService
 
         try
         {
-            await _mfaMailSender.SendMfaCodeAsync(message, cancellationToken)
+            await _mfaMailApiClient.SendMfaCodeAsync(message, cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested && IsMailDeliveryException(exception))

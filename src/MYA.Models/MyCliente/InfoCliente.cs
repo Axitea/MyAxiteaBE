@@ -21,6 +21,6 @@ public sealed class InfoCliente
 
 public sealed class Tipologia
 {
-    public string Nome { get; init; }
+    public string Nome { get; init; } = string.Empty;
 }
 

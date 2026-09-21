@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 
-namespace MYA.Business.Security;
+namespace MYA.Business.Auth;
 
-public sealed class MfaCodeGenerator : IMfaCodeGenerator
+public sealed class MfaCodeGenerator
 {
     public string Generate(int length)
     {

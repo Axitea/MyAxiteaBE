@@ -7,9 +7,9 @@ using Microsoft.IdentityModel.Tokens;
 using MYA.Models.Auth;
 using MYA.Models.Configuration;
 
-namespace MYA.Business.Security;
+namespace MYA.Business.Auth;
 
-public sealed class JwtTokenService : IJwtTokenService
+public sealed class JwtTokenService
 {
     private readonly JwtOptions _options;
 

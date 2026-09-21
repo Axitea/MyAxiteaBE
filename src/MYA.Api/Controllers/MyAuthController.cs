@@ -8,9 +8,9 @@ namespace MYA.Api.Controllers;
 [Route("api/myAuth")]
 public sealed class MyAuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly AuthService _authService;
 
-    public MyAuthController(IAuthService authService)
+    public MyAuthController(AuthService authService)
     {
         _authService = authService;
     }

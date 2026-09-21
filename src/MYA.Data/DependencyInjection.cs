@@ -1,7 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using MYA.Data.Database;
-using MYA.Data.Repositories;
-using MYA.Data.MyClienteRepo;
+using MYA.Data.Common;
+using MYA.Data.DbUnico;
+using MYA.Data.Puzzle;
+using MYA.Data.Sat;
 
 namespace MYA.Data;
 
@@ -9,12 +10,11 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddDataAccess(this IServiceCollection services)
     {
-        services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
-        services.AddScoped<IDbExecutor, SqlDbExecutor>();
-        services.AddScoped<IAuthRepository, AuthRepository>();
-        services.AddScoped<ITokenRepository, TokenRepository>();
-        services.AddScoped<ISmsOutboxRepository, SmsOutboxRepository>();
-        services.AddScoped<IMyClienteRepository, MyClienteRepository>();
+        services.AddSingleton<SqlConnectionFactory>();
+        services.AddScoped<SqlExecutor>();
+        services.AddScoped<PuzzleDataAccess>();
+        services.AddScoped<SatDataAccess>();
+        services.AddScoped<DbUnicoDataAccess>();
 
         return services;
     }

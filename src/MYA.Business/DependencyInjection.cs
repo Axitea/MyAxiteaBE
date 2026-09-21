@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using MYA.Business.Auth;
-using MYA.Business.Security;
-using MYA.Business.MyCliente;
+using MYA.Business.Clienti;
 
 namespace MYA.Business;
 
@@ -9,12 +8,12 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddBusinessServices(this IServiceCollection services)
     {
-        services.AddSingleton(TimeProvider.System);
-        services.AddSingleton<ILegacyPasswordCipher, LegacyPasswordCipher>();
-        services.AddSingleton<IMfaCodeGenerator, MfaCodeGenerator>();
-        services.AddSingleton<IJwtTokenService, JwtTokenService>();
-        services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IMyCliente, MyInfoClienti>();
+        services.AddSingleton<TimeProvider>(TimeProvider.System);
+        services.AddSingleton<LegacyPasswordCipher>();
+        services.AddSingleton<MfaCodeGenerator>();
+        services.AddSingleton<JwtTokenService>();
+        services.AddScoped<AuthService>();
+        services.AddScoped<ClientiService>();
         return services;
     }
 }

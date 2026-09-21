@@ -1,17 +1,19 @@
 using Microsoft.Data.SqlClient;
-using MYA.Data.Database;
+using MYA.Data.Common;
 using MYA.Models.Auth;
 
-namespace MYA.Data.Repositories;
+namespace MYA.Data.Puzzle;
 
-public sealed class AuthRepository : IAuthRepository
+public sealed class PuzzleDataAccess
 {
-    private readonly IDbExecutor _db;
+    private readonly SqlExecutor _sql;
 
-    public AuthRepository(IDbExecutor db)
+    public PuzzleDataAccess(SqlExecutor sql)
     {
-        _db = db;
+        _sql = sql;
     }
+
+    #region Authentication
 
     public Task<LoginUser?> GetLoginAsync(
         string codiceCliente,
@@ -28,7 +30,7 @@ public sealed class AuthRepository : IAuthRepository
             SqlParameterFactory.Int("@IdApp", appId)
         ];
 
-        return _db.QuerySingleOrDefaultAsync(
+        return _sql.QuerySingleOrDefaultAsync(
             DatabaseTarget.Puzzle,
             "dbo.sp_My_GetLogin",
             parameters,
@@ -36,7 +38,7 @@ public sealed class AuthRepository : IAuthRepository
             cancellationToken);
     }
 
-    public async Task SetMfaCodeAsync(
+    public Task SaveMfaCodeAsync(
         long userId,
         int appId,
         string code,
@@ -51,8 +53,7 @@ public sealed class AuthRepository : IAuthRepository
             SqlParameterFactory.DateTime("@RequestedAtUtc", requestedAt)
         ];
 
-        await _db.ExecuteAsync(DatabaseTarget.Puzzle, "dbo.sp_My_SetMfaCode", parameters, cancellationToken)
-            .ConfigureAwait(false);
+        return _sql.ExecuteAsync(DatabaseTarget.Puzzle, "dbo.sp_My_SetMfaCode", parameters, cancellationToken);
     }
 
     public Task<LoginUser?> VerifyMfaCodeAsync(
@@ -72,13 +73,52 @@ public sealed class AuthRepository : IAuthRepository
             SqlParameterFactory.Int("@TtlMinutes", ttlMinutes)
         ];
 
-        return _db.QuerySingleOrDefaultAsync(
+        return _sql.QuerySingleOrDefaultAsync(
             DatabaseTarget.Puzzle,
             "dbo.sp_My_VerifyMfaCode",
             parameters,
             MapLoginUser,
             cancellationToken);
     }
+
+    #endregion
+
+    #region Tokens
+
+    public Task SaveIssuedTokenAsync(JwtTokenWrite token, CancellationToken cancellationToken = default)
+    {
+        SqlParameter[] parameters =
+        [
+            SqlParameterFactory.NVarCharMax("@TokenValue", token.TokenValue),
+            SqlParameterFactory.NVarChar("@Username", token.Username, 30),
+            SqlParameterFactory.Int("@Permission", 0),
+            SqlParameterFactory.NVarChar("@RefreshToken", token.RefreshToken, 200),
+            SqlParameterFactory.Int("@IdApp", token.AppId)
+        ];
+
+        return _sql.ExecuteAsync(DatabaseTarget.Puzzle, "dbo.sp_My_InsertJWTokenValue", parameters, cancellationToken);
+    }
+
+    public Task<JwtTokenRecord?> GetTokenByRefreshTokenAsync(
+        string refreshToken,
+        int appId,
+        CancellationToken cancellationToken = default)
+    {
+        SqlParameter[] parameters =
+        [
+            SqlParameterFactory.NVarChar("@RefreshToken", refreshToken, 200),
+            SqlParameterFactory.Int("@IdApp", appId)
+        ];
+
+        return _sql.QuerySingleOrDefaultAsync(
+            DatabaseTarget.Puzzle,
+            "dbo.sp_My_GetJWTokenValue",
+            parameters,
+            MapToken,
+            cancellationToken);
+    }
+
+    #endregion
 
     private static LoginUser MapLoginUser(SqlDataReader reader)
     {
@@ -95,5 +135,17 @@ public sealed class AuthRepository : IAuthRepository
             PhoneNumber: reader.GetNullableString("Wus_2FA_NumCell"),
             IsMfaActive: string.Equals(reader.GetNullableString("Wus_2FA_IsActive")?.Trim(), "S", StringComparison.OrdinalIgnoreCase),
             IsMfaLocked: reader.GetNullableBoolean("Wus_2FA_Locked") ?? false);
+    }
+
+    private static JwtTokenRecord MapToken(SqlDataReader reader)
+    {
+        return new JwtTokenRecord(
+            IdToken: reader.GetInt32Required("idToken"),
+            TokenValue: reader.GetNullableString("tokenValue") ?? string.Empty,
+            Username: reader.GetNullableString("username") ?? string.Empty,
+            DateToken: reader.GetDateTimeRequired("dateToken"),
+            Permission: reader.GetNullableInt32("permission") ?? 0,
+            RefreshToken: reader.GetNullableString("refreshToken") ?? string.Empty,
+            IdApp: reader.GetNullableInt32("idApp"));
     }
 }

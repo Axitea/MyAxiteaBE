@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace MYA.Business.Security;
+namespace MYA.Business.Auth;
 
-public sealed class LegacyPasswordCipher : ILegacyPasswordCipher
+public sealed class LegacyPasswordCipher
 {
     public string Encrypt(string plainText, string keyPhrase)
     {
