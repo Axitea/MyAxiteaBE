@@ -19,8 +19,7 @@ public sealed class MyAuthController : ControllerBase
     [HttpPost("login")]
     [ProducesResponseType(typeof(ApiResponse<LoginStartedResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<LoginStartedResponse>), StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<ApiResponse<LoginStartedResponse>>> Login(
-        [FromBody] LoginRequest request,
+    public async Task<ActionResult<ApiResponse<LoginStartedResponse>>> Login([FromBody] LoginRequest request,
         CancellationToken cancellationToken)
     {
         try

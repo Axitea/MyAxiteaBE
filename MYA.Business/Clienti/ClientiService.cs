@@ -12,9 +12,7 @@ public sealed class ClientiService
         _dbUnicoDataAccess = dbUnicoDataAccess;
     }
 
-    public Task<List<InfoCliente>> GetAllContrattiClienteAsync(
-        string codiceCliente,
-        CancellationToken cancellationToken = default)
+    public Task<List<InfoCliente>> GetAllContrattiClienteAsync(string codiceCliente, CancellationToken cancellationToken = default)
     {
         return _dbUnicoDataAccess.GetContrattiByClienteAsync(codiceCliente, cancellationToken);
     }
