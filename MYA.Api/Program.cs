@@ -55,6 +55,7 @@ if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "MYA API v1");
         options.RoutePrefix = "swagger";
+        options.ConfigObject.AdditionalItems["syntaxHighlight"] = false;
     });
 }
 
