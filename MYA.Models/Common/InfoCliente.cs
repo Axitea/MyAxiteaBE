@@ -4,11 +4,11 @@ namespace MYA.Models.Common;
 
 public sealed class InfoCliente
 {
-    public int Id { get; init; }
+    public int? Id { get; init; }
     public string Contratto { get; init; } = string.Empty;
-    public int Posizione { get; init; }
-    public double Longitudine { get; init; } = 0;
-    public double Latitudine { get; init; } = 0;
+    public int? Posizione { get; init; }
+    public double? Longitudine { get; init; }
+    public double? Latitudine { get; init; }
     public string NomeCliente { get; init; } = string.Empty;
     public string CodiceCliente { get; init; } = string.Empty;
     public string Provincia { get; init; } = string.Empty;

@@ -11,6 +11,21 @@ internal static class SqlDataReaderExtensions
         return value is null ? null : Convert.ToString(value, CultureInfo.InvariantCulture);
     }
 
+    public static string? GetNullableTrimmedString(this SqlDataReader reader, string name)
+    {
+        return reader.GetNullableString(name)?.Trim();
+    }
+
+    public static string GetStringOrEmpty(this SqlDataReader reader, string name)
+    {
+        return reader.GetNullableString(name) ?? string.Empty;
+    }
+
+    public static string GetTrimmedStringOrEmpty(this SqlDataReader reader, string name)
+    {
+        return reader.GetNullableTrimmedString(name) ?? string.Empty;
+    }
+
     public static string GetStringRequired(this SqlDataReader reader, string name)
     {
         return reader.GetNullableString(name)
@@ -21,6 +36,28 @@ internal static class SqlDataReaderExtensions
     {
         var value = reader.GetValueOrNull(name);
         return value is null ? null : Convert.ToInt32(value, CultureInfo.InvariantCulture);
+    }
+
+    public static double? GetNullableDouble(this SqlDataReader reader, string name)
+    {
+        var value = reader.GetValueOrNull(name);
+        if (value is null)
+        {
+            return null;
+        }
+
+        if (value is string stringValue)
+        {
+            return double.TryParse(
+                stringValue,
+                NumberStyles.Float | NumberStyles.AllowThousands,
+                CultureInfo.InvariantCulture,
+                out var result)
+                ? result
+                : null;
+        }
+
+        return Convert.ToDouble(value, CultureInfo.InvariantCulture);
     }
 
     public static long? GetNullableInt64(this SqlDataReader reader, string name)

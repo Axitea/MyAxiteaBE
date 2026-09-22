@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.Data.SqlClient;
 using MYA.Data.Common;
 using MYA.Models.Common;
@@ -91,14 +90,14 @@ public sealed class DbUnicoDataAccess
     {
         return new InfoCliente
         {
-            Id = reader.GetInt32Required("Id"),
-            Contratto = reader.GetNullableString("Contratto") ?? string.Empty,
-            Posizione = reader.GetInt32Required("Posizione"),
-            Longitudine = ParseDouble(reader.GetNullableString("Longitudine")),
-            Latitudine = ParseDouble(reader.GetNullableString("Latitudine")),
-            Provincia = reader.GetStringRequired("ProvinciaServizio").Trim(),
-            Indirizzo = reader.GetNullableString("STRAS") ?? string.Empty,
-            TipologiaServizio = reader.GetNullableString("TipologiaServizio") ?? string.Empty
+            Id = reader.GetNullableInt32("Id"),
+            Contratto = reader.GetStringOrEmpty("Contratto"),
+            Posizione = reader.GetNullableInt32("Posizione"),
+            Longitudine = reader.GetNullableDouble("Longitudine"),
+            Latitudine = reader.GetNullableDouble("Latitudine"),
+            Provincia = reader.GetTrimmedStringOrEmpty("ProvinciaServizio"),
+            Indirizzo = reader.GetStringOrEmpty("STRAS"),
+            TipologiaServizio = reader.GetStringOrEmpty("TipologiaServizio")
         };
     }
 
@@ -106,19 +105,8 @@ public sealed class DbUnicoDataAccess
     {
         return new InfoCliente
         {
-            NomeCliente = reader.GetNullableString("NAME1") ?? string.Empty,            
-            CodiceCliente = reader.GetNullableString("CODCLIENTE") ?? string.Empty
+            NomeCliente = reader.GetTrimmedStringOrEmpty("NAME1"),
+            CodiceCliente = reader.GetTrimmedStringOrEmpty("CODCLIENTE")
         };
-    }
-
-    private static double ParseDouble(string? value)
-    {
-        return double.TryParse(
-            value,
-            NumberStyles.Float | NumberStyles.AllowThousands,
-            CultureInfo.InvariantCulture,
-            out var result)
-            ? result
-            : 0.0;
     }
 }
