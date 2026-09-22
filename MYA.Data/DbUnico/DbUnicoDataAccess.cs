@@ -106,8 +106,8 @@ public sealed class DbUnicoDataAccess
     {
         return new InfoCliente
         {
-            NomeCliente = reader.GetNullableString("NAME1").Trim() ?? string.Empty,            
-            CodiceCliente = reader.GetNullableString("CODCLIENTE").Trim() ?? string.Empty
+            NomeCliente = reader.GetNullableString("NAME1") ?? string.Empty,            
+            CodiceCliente = reader.GetNullableString("CODCLIENTE") ?? string.Empty
         };
     }
 
