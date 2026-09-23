@@ -1,11 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MYA.Business.Clienti;
-using MYA.Models.Auth;
 using MYA.Models.Common;
 
 namespace MYA.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/MyClienti")]
 public sealed class MyClientiController : ControllerBase
 {
