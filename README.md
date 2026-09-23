@@ -83,6 +83,18 @@ POST /api/myAuth/verifyMfa
 - `GET /api/MyClienti/GetAllContrattiByCliente`
 - `GET /api/MyClienti/GetAllClienti`
 
+Gli endpoint `MyClienti` richiedono l'access token restituito da `login` (quando
+non serve MFA) o da `verifyMfa`:
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Token mancante, non valido o scaduto: HTTP `401`. Login e verifica MFA restano
+pubblici. In Swagger si puo' inserire l'access token tramite **Authorize**;
+la verifica usa firma, issuer, audience e scadenza del JWT. La chiave di firma
+deve essere configurata nell'ambiente che ospita l'API.
+
 ## Configurazione Dev
 
 Il profilo `Development` usa gia':
