@@ -1,7 +1,6 @@
 using Microsoft.Data.SqlClient;
 using MYA.Data.Common;
 using MYA.Models.Auth;
-using MYA.Models.Common;
 using MYA.Models.Puzzle;
 
 namespace MYA.Data.Puzzle;
@@ -126,7 +125,7 @@ public sealed class PuzzleDataAccess
 
     #region Periferiche
 
-    public async Task<List<Periferica>> GetPerifericheByIdSito(int idSito, string soc, 
+    public async Task<List<Pz_Periferica>> GetPerifericheByIdSito(int idSito, string soc, 
         CancellationToken cancellationToken = default)
     {
         SqlParameter[] parameters =
@@ -138,6 +137,46 @@ public sealed class PuzzleDataAccess
         var rows = await _sql.QueryAsyncNoSequential(
                 DatabaseTarget.Puzzle,
                 "dbo.sp_Get_PZ_PerifericaByIdSito_New",
+                parameters,
+                MapPeriferica,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows.ToList();
+    }
+
+    public async Task<List<Pz_Periferica>> GetPerifericheByNPeriferica(string nPeriferica, string soc,
+        CancellationToken cancellationToken = default)
+    {
+        SqlParameter[] parameters =
+        [
+            SqlParameterFactory.VarChar("@IdPerifericaSicep", nPeriferica, 30),
+            SqlParameterFactory.NChar("@SOC", soc, 2),
+        ];
+
+        var rows = await _sql.QueryAsyncNoSequential(
+                DatabaseTarget.Puzzle,
+                "dbo.sp_GetPerifericaSicepById",
+                parameters,
+                MapPeriferica,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows.ToList();
+    }
+
+    public async Task<List<Pz_Periferica>> GetPerifericheByIdPeriferica(int idPeriferica, string soc,
+        CancellationToken cancellationToken = default)
+    {
+        SqlParameter[] parameters =
+        [
+            SqlParameterFactory.Int("@IdPeriferica", idPeriferica),
+            SqlParameterFactory.NChar("@SOC", soc, 2),
+        ];
+
+        var rows = await _sql.QueryAsyncNoSequential(
+                DatabaseTarget.Puzzle,
+                "dbo.sp_GetPerifericaByIdSoc",
                 parameters,
                 MapPeriferica,
                 cancellationToken)
@@ -177,83 +216,121 @@ public sealed class PuzzleDataAccess
 
     #endregion Periferiche
 
+    #region Canali
+
+    public async Task<List<Pz_Canale>> GetCanaliByNPeriferica(int nPeriferica, string soc,
+        CancellationToken cancellationToken = default)
+    {
+        SqlParameter[] parameters =
+        [
+            SqlParameterFactory.Int("@IdPeriferica", nPeriferica),
+            SqlParameterFactory.NChar("@SOC", soc, 2),
+        ];
+
+        var rows = await _sql.QueryAsyncNoSequential(
+                DatabaseTarget.Puzzle,
+                "dbo.sp_Get_CanaliPerifericaVw",
+                parameters,
+                MapCanale,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows.ToList();
+    }
+
+    #endregion Canali
+
+
     #endregion Puzzle
 
-    private Periferica MapPeriferica(SqlDataReader dr)
+    private Pz_Periferica MapPeriferica(SqlDataReader dr)
     {
-        /*
-        return new Periferica
-        {
-            Id_Periferica = dr.GetInt32Required("Id_Periferica"),
-            n_Periferica = dr.GetStringRequired("n_Periferica"),
-            Code = dr.GetStringRequired("Code"),
-            Id_Produttore = dr.GetInt32Required("Id_Produttore"),
-            id_sito_monitoraggio = dr.GetInt32Required("id_sito_monitoraggio"),
-            last_rec = dr.GetDateTimeRequired("last_rec"),
-            last_msg_time = dr.GetDateTimeRequired("last_msg_time"),
-            disabilitata = dr.GetBooleanRequired("disabilitata"),
-            Soc = dr.GetStringRequired("SOC"),
-            Modello = HasColumn(dr, "Modello") ? dr.GetNullableString("Modello") : null,
-            DataInizioCollaudo = HasColumn(dr, "DataInizioCollaudo") ? dr.GetNullableDateTime("DataInizioCollaudo") : null,
-            DataFineCollaudo = HasColumn(dr, "DataFineCollaudo") ? dr.GetNullableDateTime("DataFineCollaudo") : null,
-            UltimaOra = HasColumn(dr, "UltimaOra") ? dr.GetNullableInt32("UltimaOra") ?? 0 : 0,
-            Ultime24Ore = HasColumn(dr, "Ultime24Ore") ? dr.GetNullableInt32("Ultime24Ore") ?? 0 : 0,
-            UltimaSettimana = HasColumn(dr, "UltimaSettimana") ? dr.GetNullableInt32("UltimaSettimana") ?? 0 : 0,
-            UltimoMese = HasColumn(dr, "UltimoMese") ? dr.GetNullableInt32("UltimoMese") ?? 0 : 0
-        };
-        */
+        Pz_Periferica periferica = new Pz_Periferica();
 
-        Periferica periferica = new Periferica();
+        periferica.Id_Periferica = dr.GetNullableInt32("Id_Periferica") ?? 0;
+        periferica.n_Periferica = dr.GetNullableString("n_Periferica");
+        periferica.Code = dr.GetNullableString("Code");
+        periferica.Id_Produttore = dr.GetNullableInt32("Id_Produttore") ?? 0;
+        periferica.id_sito_monitoraggio = dr.GetNullableInt32("id_sito_monitoraggio") ?? 0;
+        periferica.last_rec = dr.GetNullableDateTime("last_rec") ?? default;
+        periferica.last_msg_time = dr.GetNullableDateTime("last_msg_time") ?? default;
+        periferica.disabilitata = dr.GetNullableBoolean("disabilitata") ?? false;
+        periferica.Soc = dr.GetNullableString("SOC");
 
-        if (dr["Id_Periferica"] != DBNull.Value)
-            periferica.Id_Periferica = Convert.ToInt32(dr["Id_Periferica"]);
+        periferica.Modello = HasColumn(dr, "Modello")
+            ? dr.GetNullableString("Modello")
+            : null;
 
-        if (dr["n_Periferica"] != DBNull.Value)
-            periferica.n_Periferica = dr["n_Periferica"].ToString();
+        periferica.DataInizioCollaudo = HasColumn(dr, "DataInizioCollaudo")
+            ? dr.GetNullableDateTime("DataInizioCollaudo")
+            : null;
 
-        if (dr["Code"] != DBNull.Value)
-            periferica.Code = dr["Code"].ToString();
+        periferica.DataFineCollaudo = HasColumn(dr, "DataFineCollaudo")
+            ? dr.GetNullableDateTime("DataFineCollaudo")
+            : null;
 
-        if (dr["Id_Produttore"] != DBNull.Value)
-            periferica.Id_Produttore = Convert.ToInt32(dr["Id_Produttore"]);
+        periferica.UltimaOra = HasColumn(dr, "UltimaOra")
+            ? dr.GetNullableInt32("UltimaOra") ?? 0
+            : 0;
 
-        if (dr["id_sito_monitoraggio"] != DBNull.Value)
-            periferica.id_sito_monitoraggio = Convert.ToInt32(dr["id_sito_monitoraggio"]);
+        periferica.Ultime24Ore = HasColumn(dr, "Ultime24Ore")
+            ? dr.GetNullableInt32("Ultime24Ore") ?? 0
+            : 0;
 
-        if (dr["last_rec"] != DBNull.Value)
-            periferica.last_rec = Convert.ToDateTime(dr["last_rec"]);
+        periferica.UltimaSettimana = HasColumn(dr, "UltimaSettimana")
+            ? dr.GetNullableInt32("UltimaSettimana") ?? 0
+            : 0;
 
-        if (dr["last_msg_time"] != DBNull.Value)
-            periferica.last_msg_time = Convert.ToDateTime(dr["last_msg_time"]);
-
-        if (dr["disabilitata"] != DBNull.Value)
-            periferica.disabilitata = Convert.ToBoolean(dr["disabilitata"]);
-
-        if (dr["SOC"] != DBNull.Value)
-            periferica.Soc = dr["SOC"].ToString();
-
-        if (HasColumn(dr, "Modello") && dr["Modello"] != DBNull.Value)
-            periferica.Modello = dr["Modello"].ToString();
-
-        if (HasColumn(dr, "DataInizioCollaudo") && dr["DataInizioCollaudo"] != DBNull.Value)
-            periferica.DataInizioCollaudo = Convert.ToDateTime(dr["DataInizioCollaudo"]);
-
-        if (HasColumn(dr, "DataFineCollaudo") && dr["DataFineCollaudo"] != DBNull.Value)
-            periferica.DataFineCollaudo = Convert.ToDateTime(dr["DataFineCollaudo"]);
-
-        if (HasColumn(dr, "UltimaOra") && dr["UltimaOra"] != DBNull.Value)
-            periferica.UltimaOra = Convert.ToInt32(dr["UltimaOra"]);
-
-        if (HasColumn(dr, "Ultime24Ore") && dr["Ultime24Ore"] != DBNull.Value)
-            periferica.Ultime24Ore = Convert.ToInt32(dr["Ultime24Ore"]);
-
-        if (HasColumn(dr, "UltimaSettimana") && dr["UltimaSettimana"] != DBNull.Value)
-            periferica.UltimaSettimana = Convert.ToInt32(dr["UltimaSettimana"]);
-
-        if (HasColumn(dr, "UltimoMese") && dr["UltimoMese"] != DBNull.Value)
-            periferica.UltimoMese = Convert.ToInt32(dr["UltimoMese"]);
+        periferica.UltimoMese = HasColumn(dr, "UltimoMese")
+            ? dr.GetNullableInt32("UltimoMese") ?? 0
+            : 0;
 
         return periferica;
+    }
+
+    private Pz_Canale MapCanale(SqlDataReader dr)
+    {
+        Pz_Canale canale = new Pz_Canale();
+
+        canale.Id_Canale = dr.GetNullableInt32("Id_Canale") ?? 0;
+        canale.Id_Periferica = dr.GetNullableInt32("Id_Periferica") ?? 0;
+        canale.Id_Sito_Monitoraggio = dr.GetNullableInt32("Id_Sito_Monitoraggio") ?? 0;
+
+        canale.Codice = dr.GetNullableString("Codice");
+        canale.BadState = dr.GetNullableBoolean("BadState") ?? false;
+        canale.Fascia = dr.GetNullableString("Fascia");
+        canale.Descr = dr.GetNullableString("Descr");
+        canale.StatoOn = dr.GetNullableString("StatoOn");
+        canale.StatoOff = dr.GetNullableString("StatoOff");
+        canale.UltimoStato = dr.GetNullableString("UltimoStato");
+        canale.UltimoColore = dr.GetNullableString("UltimoColore");
+
+        canale.UltimoRX = dr.GetNullableDateTime("UltimoRX") ?? default;
+
+        canale.Id_TipoComunicazione = dr.GetNullableInt32("Id_TipoComunicazione") ?? 0;
+
+        canale.Soc = dr.GetNullableString("SOC");
+
+        canale.Disabilitato = dr.GetNullableInt32("Disabilitato") ?? 0;
+        canale.RcHours = dr.GetNullableInt32("RcHours") ?? 0;
+        canale.RcItem = dr.GetNullableString("RcItem");
+
+        // Campi opzionali
+        if (HasColumn(dr, "ArrayTlc"))
+            canale.ArrayTlc = dr.GetNullableString("ArrayTlc");
+
+        // Periferica
+        if (HasColumn(dr, "Code_Periferica"))
+            canale.Code_Periferica = dr.GetNullableString("Code_Periferica");
+
+        if (HasColumn(dr, "Modello"))
+            canale.Modello = dr.GetNullableString("Modello");
+
+        // Collaudo TO
+        if (HasColumn(dr, "Collaudato"))
+            canale.Collaudato = dr.GetNullableBoolean("Collaudato") ?? false;
+
+        return canale;
     }
 
     private bool HasColumn(SqlDataReader reader, string columnName)

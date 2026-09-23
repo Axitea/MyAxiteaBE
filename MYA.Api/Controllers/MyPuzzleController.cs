@@ -18,32 +18,142 @@ namespace MYA.Api.Controllers
             _puzzleService = puzzleService;
         }
 
+        #region Periferiche
+
         [HttpGet("GetPerifericheByIdSito")]
-        [ProducesResponseType(typeof(ApiResponse<List<Periferica>>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<ApiResponse<List<Periferica>>>> GetPerifericheByIdSito(int idSito, string soc,
+        [ProducesResponseType(typeof(ApiResponse<List<Pz_Periferica>>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<List<Pz_Periferica>>>> GetPerifericheByIdSito(int idSito, string soc,
             CancellationToken cancellationToken)
         {
-            // Recupero periferiche...
-            List<Periferica> periferiche = await _puzzleService
+            try
+            {
+                // Recupero tutte le periferiche di un determinato sito
+                List<Pz_Periferica> periferiche = await _puzzleService
                 .GetPerifericheByIdSito(idSito, soc, cancellationToken)
                 .ConfigureAwait(false);
 
-            return Ok(new
+                return Ok(new
+                {
+                    Response = "OK",
+                    Data = periferiche,
+                    Message = "successo"
+                });
+            }
+            catch (Exception ex)
             {
-                Response = "OK",
-                Data = periferiche,
-                Message = "successo"
-            });
+                return Ok(new
+                {
+                    Response = "KO",
+                    Message = "Errore:" + ex.Message
+                });
+            }
         }
+
+        [HttpGet("GetPerifericheByNPeriferica")]
+        [ProducesResponseType(typeof(ApiResponse<List<Pz_Periferica>>), StatusCodes.Status200OK)]
+        /// <summary>
+        /// Recupera le periferiche in base al id di Mvs.
+        /// </summary>
+        /// <param name="nPeriferica">E l'id device di Mvs</param>
+        /// <param name="soc">Il codice SOC.</param>
+        /// <param name="cancellationToken">Il token di cancellazione.</param>
+        /// <returns>Una lista di periferiche.</returns>
+        public async Task<ActionResult<ApiResponse<List<Pz_Periferica>>>> GetPerifericheByNPeriferica(string nPeriferica, string soc,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                List<Pz_Periferica> periferiche = await _puzzleService
+                .GetPerifericheByNPeriferica(nPeriferica, soc, cancellationToken)
+                .ConfigureAwait(false);
+
+                return Ok(new
+                {
+                    Response = "OK",
+                    Data = periferiche,
+                    Message = "successo"
+                });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new
+                {
+                    Response = "KO",
+                    Message = "Errore:" + ex.Message
+                });
+            }
+        }
+
+        [HttpGet("GetPerifericheByIdPeriferica")]
+        [ProducesResponseType(typeof(ApiResponse<List<Pz_Periferica>>), StatusCodes.Status200OK)]
+        /// <summary>
+        /// Recupera le periferiche in base al id.
+        /// </summary>
+        /// <param name="idPeriferica">E' l'id_periferica del DB Puzzle</param>
+        /// <param name="soc">Il codice SOC.</param>
+        /// <param name="cancellationToken">Il token di cancellazione.</param>
+        /// <returns>Una lista di periferiche.</returns>
+        public async Task<ActionResult<ApiResponse<List<Pz_Periferica>>>> GetPerifericheByIdPeriferica(int  idPeriferica, string soc,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                List<Pz_Periferica> periferiche = await _puzzleService
+                .GetPerifericheByIdPeriferica(idPeriferica, soc, cancellationToken)
+                .ConfigureAwait(false);
+
+                return Ok(new
+                {
+                    Response = "OK",
+                    Data = periferiche,
+                    Message = "successo"
+                });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new
+                {
+                    Response = "KO",
+                    Message = "Errore:" + ex.Message
+                });
+            }
+        }
+
+        #endregion Periferiche
+
+        #region Canali
 
         [HttpGet("GetCanaliByNPeriferica")]
-        public IActionResult GetCanaliByNPeriferica(int nPeriferica, string soc)
+        public async Task<ActionResult<ApiResponse<List<Pz_Periferica>>>> GetCanaliByNPeriferica(int idPeriferica, string soc,
+            CancellationToken cancellationToken)
         {
-            // Recupero i Canali di una periferiche...
+            try
+            {
+                // Recupero i Canali di una periferica
+                List<Pz_Canale> canali = await _puzzleService
+                    .GetCanaliByNPeriferica(idPeriferica, soc, cancellationToken)
+                    .ConfigureAwait(false);
 
-            return Ok();
+                return Ok(new
+                {
+                    Response = "OK",
+                    Data = canali,
+                    Message = "successo"
+                });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new
+                {
+                    Response = "KO",
+                    Message = "Errore:" + ex.Message
+                });
+            }
         }
 
+        #endregion Canali
+
+        /*
         [HttpGet("GetFasceOrarieByIdSito")]
         public IActionResult GetFasceOrarieByIdSito(int idSito, string soc)
         {
@@ -83,6 +193,7 @@ namespace MYA.Api.Controllers
 
             return Ok();
         }
+        */
        
     }
 }

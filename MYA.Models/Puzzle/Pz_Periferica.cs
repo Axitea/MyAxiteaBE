@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MYA.Models.Puzzle
 {
-    public class Periferica
+    public class Pz_Periferica
     {
         public int Id_Periferica { get; set; }
 

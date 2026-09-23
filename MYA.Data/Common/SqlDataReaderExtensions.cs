@@ -103,6 +103,15 @@ internal static class SqlDataReaderExtensions
         };
     }
 
+    public static DateTime? GetNullableDateTime(this SqlDataReader reader, string columnName)
+    {
+        int ordinal = reader.GetOrdinal(columnName);
+
+        return reader.IsDBNull(ordinal)
+            ? null
+            : Convert.ToDateTime(reader.GetValue(ordinal));
+    }
+
     private static object? GetValueOrNull(this SqlDataReader reader, string name)
     {
         var ordinal = reader.GetOrdinal(name);
