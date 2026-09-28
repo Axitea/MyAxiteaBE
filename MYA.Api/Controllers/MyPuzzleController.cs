@@ -119,6 +119,34 @@ namespace MYA.Api.Controllers
             }
         }
 
+        [HttpGet("GetPerifericheByCode")]
+        [ProducesResponseType(typeof(ApiResponse<List<Pz_Periferica>>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<List<Pz_Periferica>>>> GetPerifericheByCode(string code, string soc,
+            bool? disabilitata, CancellationToken cancellationToken)
+        {
+            try
+            {
+                List<Pz_Periferica> periferiche = await _puzzleService
+                .GetPerifericheByCode(code, soc, disabilitata, cancellationToken)
+                .ConfigureAwait(false);
+
+                return Ok(new
+                {
+                    Response = "OK",
+                    Data = periferiche,
+                    Message = "successo"
+                });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new
+                {
+                    Response = "KO",
+                    Message = "Errore:" + ex.Message
+                });
+            }
+        }
+
         #endregion Periferiche
 
         #region Canali
@@ -152,6 +180,53 @@ namespace MYA.Api.Controllers
         }
 
         #endregion Canali
+
+        #region Recapiti
+
+        [HttpGet("GetRecapitiByIdSito")]
+        [ProducesResponseType(typeof(ApiResponse<List<Pz_Persona>>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<List<Pz_Persona>>>> GetRecapitiByIdSito(int idSito, string soc,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                List<Pz_Persona> periferiche = await _puzzleService
+                .GetRecapitiByIdSito(idSito, soc, cancellationToken)
+                .ConfigureAwait(false);
+
+                return Ok(new
+                {
+                    Response = "OK",
+                    Data = periferiche,
+                    Message = "successo"
+                });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new
+                {
+                    Response = "KO",
+                    Message = "Errore:" + ex.Message
+                });
+            }
+        }
+
+        #endregion Recapiti
+
+
+        #region Fasce Orarie
+
+
+
+        #endregion Fasce Orarie
+
+
+        #region Telecamere
+
+
+
+        #endregion Telecamere
+
 
         /*
         [HttpGet("GetFasceOrarieByIdSito")]
@@ -194,6 +269,6 @@ namespace MYA.Api.Controllers
             return Ok();
         }
         */
-       
+
     }
 }

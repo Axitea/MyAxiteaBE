@@ -34,6 +34,13 @@ namespace MYA.Business.Puzzle
             return _puzzleDataAccess.GetPerifericheByIdPeriferica(idPeriferica, soc, cancellationToken);
         }
 
+        public Task<List<Pz_Periferica>> GetPerifericheByCode(string code, string soc, bool? disabilitata,
+            CancellationToken cancellationToken = default)
+        {
+            return _puzzleDataAccess.GetPerifericheByCode(code, soc, disabilitata, cancellationToken);
+        }
+        
+
         #endregion Periferiche
 
         #region Canali
@@ -44,5 +51,14 @@ namespace MYA.Business.Puzzle
         }
 
         #endregion Canali
+
+        #region Recapiti / Persone
+
+        public Task<List<Pz_Persona>> GetRecapitiByIdSito(int idSito, string soc, CancellationToken cancellationToken = default)
+        {
+            return _puzzleDataAccess.GetRecapitiByIdSito(idSito, soc, cancellationToken);
+        }
+
+        #endregion Recapiti / Persone
     }
 }

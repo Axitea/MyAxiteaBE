@@ -2,6 +2,7 @@ using Microsoft.Data.SqlClient;
 using MYA.Data.Common;
 using MYA.Models.Auth;
 using MYA.Models.Puzzle;
+using System.Data;
 
 namespace MYA.Data.Puzzle;
 
@@ -185,6 +186,35 @@ public sealed class PuzzleDataAccess
         return rows.ToList();
     }
 
+    public async Task<List<Pz_Periferica>> GetPerifericheByCode(string code, string soc, bool? disabilitata = null,
+        CancellationToken cancellationToken = default)
+    {
+        List<SqlParameter> parameters =
+        [
+            SqlParameterFactory.NVarChar("@Code", code, 100),
+            SqlParameterFactory.NChar("@SOC", soc, 2),
+        ];
+
+        if (disabilitata.HasValue)
+        {
+            parameters.Add(
+                new SqlParameter("@Disabilitata", SqlDbType.Bit)
+                {
+                    Value = disabilitata.Value
+                });
+        }
+
+        var rows = await _sql.QueryAsyncNoSequential(
+                DatabaseTarget.Puzzle,
+                "dbo.sp_Get_Pz_Periferiche_ByCode",
+                parameters,
+                MapPeriferica,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows.ToList();
+    }
+
     /*
     public async DataTable SP_GetPerifericaByNPeriferica(int nPeriferica, string SOCRif)
     {
@@ -240,8 +270,33 @@ public sealed class PuzzleDataAccess
 
     #endregion Canali
 
+    #region Recapiti / Persone
+
+    public async Task<List<Pz_Persona>> GetRecapitiByIdSito(int idSito, string soc,
+        CancellationToken cancellationToken = default)
+    {
+        SqlParameter[] parameters =
+        [
+            SqlParameterFactory.Int("@IdSito", idSito),
+            SqlParameterFactory.NChar("@SOC", soc, 2),
+        ];
+
+        var rows = await _sql.QueryAsyncNoSequential(
+                DatabaseTarget.Puzzle,
+                "dbo.sp_Get_PersoneSito",
+                parameters,
+                MapPersona,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows.ToList();
+    }
+
+    #endregion Recapiti / Persone
 
     #endregion Puzzle
+
+    #region Metodi Privati di Mapping
 
     private Pz_Periferica MapPeriferica(SqlDataReader dr)
     {
@@ -257,31 +312,31 @@ public sealed class PuzzleDataAccess
         periferica.disabilitata = dr.GetNullableBoolean("disabilitata") ?? false;
         periferica.Soc = dr.GetNullableString("SOC");
 
-        periferica.Modello = HasColumn(dr, "Modello")
+        periferica.Modello = dr.HasColumn("Modello")
             ? dr.GetNullableString("Modello")
             : null;
 
-        periferica.DataInizioCollaudo = HasColumn(dr, "DataInizioCollaudo")
+        periferica.DataInizioCollaudo = dr.HasColumn("DataInizioCollaudo")
             ? dr.GetNullableDateTime("DataInizioCollaudo")
             : null;
 
-        periferica.DataFineCollaudo = HasColumn(dr, "DataFineCollaudo")
+        periferica.DataFineCollaudo = dr.HasColumn("DataFineCollaudo")
             ? dr.GetNullableDateTime("DataFineCollaudo")
             : null;
 
-        periferica.UltimaOra = HasColumn(dr, "UltimaOra")
+        periferica.UltimaOra = dr.HasColumn("UltimaOra")
             ? dr.GetNullableInt32("UltimaOra") ?? 0
             : 0;
 
-        periferica.Ultime24Ore = HasColumn(dr, "Ultime24Ore")
+        periferica.Ultime24Ore = dr.HasColumn("Ultime24Ore")
             ? dr.GetNullableInt32("Ultime24Ore") ?? 0
             : 0;
 
-        periferica.UltimaSettimana = HasColumn(dr, "UltimaSettimana")
+        periferica.UltimaSettimana = dr.HasColumn("UltimaSettimana")
             ? dr.GetNullableInt32("UltimaSettimana") ?? 0
             : 0;
 
-        periferica.UltimoMese = HasColumn(dr, "UltimoMese")
+        periferica.UltimoMese = dr.HasColumn("UltimoMese")
             ? dr.GetNullableInt32("UltimoMese") ?? 0
             : 0;
 
@@ -316,37 +371,89 @@ public sealed class PuzzleDataAccess
         canale.RcItem = dr.GetNullableString("RcItem");
 
         // Campi opzionali
-        if (HasColumn(dr, "ArrayTlc"))
+        if (dr.HasColumn("ArrayTlc"))
             canale.ArrayTlc = dr.GetNullableString("ArrayTlc");
 
         // Periferica
-        if (HasColumn(dr, "Code_Periferica"))
+        if (dr.HasColumn("Code_Periferica"))
             canale.Code_Periferica = dr.GetNullableString("Code_Periferica");
 
-        if (HasColumn(dr, "Modello"))
+        if (dr.HasColumn("Modello"))
             canale.Modello = dr.GetNullableString("Modello");
 
         // Collaudo TO
-        if (HasColumn(dr, "Collaudato"))
+        if (dr.HasColumn("Collaudato"))
             canale.Collaudato = dr.GetNullableBoolean("Collaudato") ?? false;
 
         return canale;
     }
 
-    private bool HasColumn(SqlDataReader reader, string columnName)
+    private Pz_Persona MapPersona(SqlDataReader dr)
     {
-        for (int i = 0; i < reader.FieldCount; i++)
+        Pz_Persona persona = new Pz_Persona();
+
+        persona.TipologiaPersona = new Tipologia_Persona();
+
+        persona.Id_Persona = dr.GetNullableInt32("Id_Persona") ?? 0;
+        persona.Persona = dr.GetNullableString("Persona");
+        persona.Cell1 = dr.GetNullableString("Cell1");
+        persona.Cell2 = dr.GetNullableString("Cell2");
+        persona.Email = dr.GetNullableString("email");
+        persona.Tel_Ufficio = dr.GetNullableString("Tel_ufficio");
+        persona.Nome = dr.GetNullableString("Nome");
+        persona.Cognome = dr.GetNullableString("Cognome");
+        persona.Note = dr.GetNullableString("Note");
+
+        if (dr.HasColumn("Id_TipologiaPersona"))
         {
-            if (string.Equals(
-                reader.GetName(i),
-                columnName,
-                StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
+            persona.TipologiaPersona.Id_TipologiaPersona =
+                dr.GetNullableInt32("Id_TipologiaPersona") ?? 0;
         }
 
-        return false;
+        if (dr.HasColumn("TipologiaPersona"))
+        {
+            persona.TipologiaPersona.TipologiaPersonaDesc =
+                dr.GetNullableString("TipologiaPersona");
+        }
+
+        if (dr.HasColumn("NomeSito"))
+        {
+            persona.NomeSito = dr.GetNullableString("NomeSito");
+        }
+
+        if (dr.HasColumn("PWD"))
+        {
+            persona.PWD = dr.GetNullableString("PWD");
+        }
+
+        if (dr.HasColumn("Id_Calendario"))
+        {
+            persona.Id_Calendario =
+                dr.GetNullableInt32("Id_Calendario") ?? 0;
+        }
+
+        if (dr.HasColumn("Id_sito_monitoraggio"))
+        {
+            persona.Id_sito_monitoraggio =
+                dr.GetNullableInt32("Id_sito_monitoraggio") ?? 0;
+        }
+
+        if (dr.HasColumn("Ordine"))
+        {
+            persona.Ordine =
+                dr.GetNullableInt32("Ordine") ?? 0;
+        }
+
+        // Mantiene il comportamento del vecchio mapping
+        if (dr.HasColumn("PWD"))
+        {
+            string? pwd = dr.GetNullableString("PWD");
+
+            if (pwd != null)
+                persona.Persona = pwd;
+        }
+
+        return persona;
     }
 
     private static LoginUser MapLoginUser(SqlDataReader reader)
@@ -377,4 +484,6 @@ public sealed class PuzzleDataAccess
             RefreshToken: reader.GetNullableString("refreshToken") ?? string.Empty,
             IdApp: reader.GetNullableInt32("idApp"));
     }
+
+    #endregion Metodi Privati di Mapping
 }

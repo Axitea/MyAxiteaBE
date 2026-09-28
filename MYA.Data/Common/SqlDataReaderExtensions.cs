@@ -112,6 +112,22 @@ internal static class SqlDataReaderExtensions
             : Convert.ToDateTime(reader.GetValue(ordinal));
     }
 
+    public static bool HasColumn(this SqlDataReader reader, string columnName)
+    {
+        for (int i = 0; i < reader.FieldCount; i++)
+        {
+            if (string.Equals(
+                reader.GetName(i),
+                columnName,
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static object? GetValueOrNull(this SqlDataReader reader, string name)
     {
         var ordinal = reader.GetOrdinal(name);
