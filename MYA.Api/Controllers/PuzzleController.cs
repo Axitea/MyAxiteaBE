@@ -9,11 +9,11 @@ namespace MYA.Api.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
-    public class MyPuzzleController : ControllerBase
+    public class PuzzleController : ControllerBase
     {
         private readonly PuzzleService _puzzleService;
 
-        public MyPuzzleController(PuzzleService puzzleService)
+        public PuzzleController(PuzzleService puzzleService)
         {
             _puzzleService = puzzleService;
         }

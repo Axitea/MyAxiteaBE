@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <Compile Remove="Controllers\PuzzleController.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MYA.Models\MYA.Models.csproj" />
     <ProjectReference Include="..\MYA.Business\MYA.Business.csproj" />
     <ProjectReference Include="..\MYA.Data\MYA.Data.csproj" />
