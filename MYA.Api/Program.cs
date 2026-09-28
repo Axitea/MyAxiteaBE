@@ -89,7 +89,7 @@ builder.Services.AddSwaggerGen(options =>
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT",
-        Description = "Access token restituito da login o verifyMfa."
+        Description = "Incolla solo l'access token restituito da login o verifyMfa, senza il prefisso Bearer."
     });
     options.OperationFilter<BearerSecurityOperationFilter>();
 });

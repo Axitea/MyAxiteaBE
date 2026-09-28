@@ -16,6 +16,9 @@ Swagger parte su:
 http://127.0.0.1:5110/swagger
 ```
 
+L'avvio locale usa un solo profilo `http` e una sola porta, `5110`, per Swagger
+e tutti gli endpoint API. Il FE usa `http://127.0.0.1:5110/api`.
+
 La configurazione di sviluppo e' gia' inclusa in:
 
 ```text
@@ -92,6 +95,9 @@ Authorization: Bearer <accessToken>
 
 Token mancante, non valido o scaduto: HTTP `401`. Login e verifica MFA restano
 pubblici. In Swagger si puo' inserire l'access token tramite **Authorize**;
+incolla soltanto il token nel campo **Value**, senza il prefisso `Bearer`,
+applica le credenziali e chiudi la finestra. Swagger aggiunge automaticamente
+`Authorization: Bearer <accessToken>` agli endpoint protetti.
 la verifica usa firma, issuer, audience e scadenza del JWT. La chiave di firma
 deve essere configurata nell'ambiente che ospita l'API.
 
