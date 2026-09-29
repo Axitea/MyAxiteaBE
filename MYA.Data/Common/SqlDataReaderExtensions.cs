@@ -112,6 +112,15 @@ internal static class SqlDataReaderExtensions
             : Convert.ToDateTime(reader.GetValue(ordinal));
     }
 
+    public static decimal? GetNullableDecimal(this SqlDataReader reader, string columnName)
+    {
+        int ordinal = reader.GetOrdinal(columnName);
+
+        return reader.IsDBNull(ordinal)
+            ? null
+            : Convert.ToDecimal(reader.GetValue(ordinal));
+    }
+
     public static bool HasColumn(this SqlDataReader reader, string columnName)
     {
         for (int i = 0; i < reader.FieldCount; i++)

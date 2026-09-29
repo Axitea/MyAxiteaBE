@@ -17,6 +17,15 @@ namespace MYA.Business.Puzzle
             _puzzleDataAccess = puzzleDataAccess;
         }
 
+        #region Siti Monitoraggio
+
+        public Task<Pz_Sito> GetSitoById(int idSito, string soc, CancellationToken cancellationToken = default)
+        {
+            return _puzzleDataAccess.GetSitoById(idSito, soc, cancellationToken);
+        }
+
+        #endregion Siti Monitoraggio
+
         #region Periferiche
 
         public Task<List<Pz_Periferica>> GetPerifericheByIdSito(int idSito, string soc, CancellationToken cancellationToken = default)
@@ -60,5 +69,15 @@ namespace MYA.Business.Puzzle
         }
 
         #endregion Recapiti / Persone
+
+        #region Telecamere / CVM
+
+        public Task<List<CVM_Device>> GetTelecamereByCodePerif(string codePerif, string soc, CancellationToken cancellationToken = default)
+        {
+            return _puzzleDataAccess.GetTelecamereByCodePerif(codePerif, soc, cancellationToken);
+        }
+
+        #endregion Telecamere / CVM
+
     }
 }

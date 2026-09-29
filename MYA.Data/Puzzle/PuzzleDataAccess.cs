@@ -3,6 +3,7 @@ using MYA.Data.Common;
 using MYA.Models.Auth;
 using MYA.Models.Puzzle;
 using System.Data;
+using System.Runtime.ConstrainedExecution;
 
 namespace MYA.Data.Puzzle;
 
@@ -124,6 +125,30 @@ public sealed class PuzzleDataAccess
 
     #region Puzzle
 
+    #region Siti
+
+    public async Task<Pz_Sito> GetSitoById(int idSito, string soc,
+        CancellationToken cancellationToken = default)
+    {
+        SqlParameter[] parameters =
+        [
+            SqlParameterFactory.Int("@IdSito", idSito),
+            SqlParameterFactory.NChar("@SOC", soc, 2),
+        ];
+
+        var rows = await _sql.QueryAsyncNoSequential(
+                DatabaseTarget.Puzzle,
+                "dbo.sp_Get_PZ_SitoByIdAndSoc",
+                parameters,
+                MapSito,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows[0];
+    }
+
+    #endregion Siti
+
     #region Periferiche
 
     public async Task<List<Pz_Periferica>> GetPerifericheByIdSito(int idSito, string soc, 
@@ -215,35 +240,6 @@ public sealed class PuzzleDataAccess
         return rows.ToList();
     }
 
-    /*
-    public async DataTable SP_GetPerifericaByNPeriferica(int nPeriferica, string SOCRif)
-    {
-        try
-        {
-            List<SqlParameter> parameters = new List<SqlParameter>();
-            parameters.Add(new SqlParameter("@IdPerifericaSicep", nPeriferica.ToString()));
-            parameters.Add(new SqlParameter("@SOC", SOCRif));
-
-            var rows = await _sql.QueryAsyncNoSequential(
-                DatabaseTarget.Puzzle,
-                "dbo.sp_Get_PZ_PerifericaByIdSito_New",
-                parameters,
-                MapPeriferica,
-                cancellationToken)
-            .ConfigureAwait(false);
-
-            // Eseguo la SP di get
-            DataTable dt = sqlServHlp.ExecuteStoredProcedure("dbo.sp_GetPerifericaSicepById", parameters.ToArray());
-            return dt;
-        }
-        catch (Exception exc)
-        {
-            // this.SP_InsertLogSP(MethodBase.GetCurrentMethod().Name, exc.Message);
-            throw;
-        }
-    }
-    */
-
     #endregion Periferiche
 
     #region Canali
@@ -294,9 +290,94 @@ public sealed class PuzzleDataAccess
 
     #endregion Recapiti / Persone
 
+    #region Telecamere / CVM
+
+    public async Task<List<CVM_Device>> GetTelecamereByCodePerif(string codePerif, string soc,
+        CancellationToken cancellationToken = default)
+    {
+        SqlParameter[] parameters =
+        [
+            SqlParameterFactory.NVarChar("@Periferica", codePerif, 9),
+        ];
+
+        var rows = await _sql.QueryAsyncNoSequential(
+                DatabaseTarget.Puzzle,
+                "dbo.SP_Get_CvmDevicesByPerif",
+                parameters,
+                MapCvmDevice,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows.ToList();
+    }
+
+    #endregion Telecamere / CVM
+
     #endregion Puzzle
 
     #region Metodi Privati di Mapping
+
+    private Pz_Sito MapSito(SqlDataReader dr)
+    {
+        Pz_Sito sito = new Pz_Sito();
+
+        sito.ID_UTE = dr.GetNullableString("ID_UTE");
+        sito.CONTRATTO = dr.GetNullableString("CONTRATTO");
+        sito.CODICEAMM = dr.GetNullableString("CODICEAMM");
+        sito.GRUPPO = dr.GetNullableString("GRUPPO");
+        sito.NOME = dr.GetNullableString("NOME");
+        sito.INDIRIZZO = dr.GetNullableString("INDIRIZZO");
+        sito.LOCALITA = dr.GetNullableString("LOCALITA");
+        sito.CITTA = dr.GetNullableString("CITTA");
+        sito.PROV = dr.GetNullableString("PROV");
+        sito.CAP = dr.GetNullableString("CAP");
+        sito.COMPETENZA = dr.GetNullableString("COMPETENZA");
+
+        sito.SF0 = dr.GetNullableString("SF0");
+        sito.SF1 = dr.GetNullableString("SF1");
+        sito.SF2 = dr.GetNullableString("SF2");
+        sito.SF3 = dr.GetNullableString("SF3");
+        sito.SF4 = dr.GetNullableString("SF4");
+        sito.SF5 = dr.GetNullableString("SF5");
+        sito.SF6 = dr.GetNullableString("SF6");
+        sito.SF7 = dr.GetNullableString("SF7");
+        sito.SF8 = dr.GetNullableString("SF8");
+        sito.SF9 = dr.GetNullableString("SF9");
+
+        sito.RIF_DISTR = dr.GetNullableString("RIF_DISTR");
+
+        decimal? latitudine = dr.GetNullableDecimal("Lat");
+        if (latitudine.HasValue)
+            sito.Latitudine = Math.Round(latitudine.Value, 7);
+
+        decimal? longitudine = dr.GetNullableDecimal("Lon");
+        if (longitudine.HasValue)
+            sito.Longitudine = Math.Round(longitudine.Value, 7);
+
+        sito.SOC = dr.GetNullableString("SOC");
+        sito.IsMatched = dr.GetNullableBoolean("IsMatched") ?? false;
+        sito.Disabilitato = dr.GetNullableBoolean("Disabilitato") ?? false;
+
+        if (dr.HasColumn("ScoreCommerciale"))
+            sito.ScoreCommerciale = dr.GetNullableInt32("ScoreCommerciale") ?? 0;
+
+        if (dr.HasColumn("Prioritario"))
+            sito.Prioritario = dr.GetNullableBoolean("Prioritario") ?? false;
+
+        if (dr.HasColumn("SpedisciMailPerModificaDati"))
+            sito.SpedisciMailPerModificaDati =
+                dr.GetNullableBoolean("SpedisciMailPerModificaDati") ?? false;
+
+        if (dr.HasColumn("Id_SezioneAlbero"))
+            sito.Id_SezioneAlbero =
+                dr.GetNullableInt32("Id_SezioneAlbero") ?? 0;
+
+        if (dr.HasColumn("IsAivvDisabilitato"))
+            sito.IsAivvDisabilitato =
+                dr.GetNullableBoolean("IsAivvDisabilitato") ?? false;
+
+        return sito;
+    }
 
     private Pz_Periferica MapPeriferica(SqlDataReader dr)
     {
@@ -454,6 +535,22 @@ public sealed class PuzzleDataAccess
         }
 
         return persona;
+    }
+
+    private CVM_Device MapCvmDevice(SqlDataReader dr)
+    {
+        CVM_Device cvmDevice = new CVM_Device();
+
+        cvmDevice.Id = dr.GetNullableInt32("Id") ?? 0;
+        cvmDevice.Cvm_Id = dr.GetNullableInt32("Cvm_Id") ?? 0;
+        cvmDevice.Zona_Id = dr.GetNullableInt32("Zona_Id") ?? 0;
+        cvmDevice.Padre_Id = dr.GetNullableInt32("Padre_Id") ?? 0;
+        cvmDevice.Periferica = dr.GetNullableString("Periferica");
+        cvmDevice.Nome = dr.GetNullableString("Nome");
+        cvmDevice.Soc = dr.GetNullableString("Soc");
+        cvmDevice.Modello = dr.GetNullableString("Modello");
+
+        return cvmDevice;
     }
 
     private static LoginUser MapLoginUser(SqlDataReader reader)
