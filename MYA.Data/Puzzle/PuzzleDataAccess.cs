@@ -123,8 +123,6 @@ public sealed class PuzzleDataAccess
 
     #endregion
 
-    #region Puzzle
-
     #region Siti
 
     public async Task<Pz_Sito> GetSitoById(int idSito, string soc,
@@ -312,8 +310,6 @@ public sealed class PuzzleDataAccess
     }
 
     #endregion Telecamere / CVM
-
-    #endregion Puzzle
 
     #region Metodi Privati di Mapping
 

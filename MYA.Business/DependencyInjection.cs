@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MYA.Business.Auth;
 using MYA.Business.Clienti;
 using MYA.Business.Puzzle;
+using MYA.Business.Mvs;
 
 namespace MYA.Business;
 
@@ -16,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<AuthService>();
         services.AddScoped<ClientiService>();
         services.AddScoped<PuzzleService>();
+        services.AddScoped<MvsService>();
         return services;
     }
 }

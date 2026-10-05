@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <Compile Remove="Puzzle\PuzzleApiClient.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MYA.Models\MYA.Models.csproj" />
     <ProjectReference Include="..\MYA.Data\MYA.Data.csproj" />
   </ItemGroup>

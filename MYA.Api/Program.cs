@@ -1,13 +1,14 @@
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using MYA.Api.Swagger;
 using MYA.Business;
 using MYA.Business.Auth;
+using MYA.Business.Mvs;
 using MYA.Data;
 using MYA.Models.Configuration;
-using Microsoft.Extensions.Options;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,8 @@ builder.Services.Configure<DatabaseOptions>(builder.Configuration.GetSection("Da
 builder.Services.Configure<MyAuthOptions>(builder.Configuration.GetSection("MyAuth"));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<MailApiOptions>(builder.Configuration.GetSection("MailApi"));
+builder.Services.Configure<MvsOptions>(builder.Configuration.GetSection("Mvs"));
+
 
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
     ?? throw new InvalidOperationException("JWT configuration is missing.");
@@ -63,6 +66,22 @@ builder.Services.AddHttpClient<MfaMailApiClient>((serviceProvider, client) =>
     client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
 });
 
+builder.Services
+    .AddHttpClient<MvsApiClient>(client =>
+    {
+        client.Timeout = TimeSpan.FromSeconds(30);
+    })
+    .ConfigurePrimaryHttpMessageHandler(() =>
+        new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback =
+                (request, certificate, chain, errors) =>
+                {
+                    var host = request.RequestUri?.Host;
+
+                    return host is "10.20.3.129" or "10.20.3.131";
+                }
+        });
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontEnd", policy =>
